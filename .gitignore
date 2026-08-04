@@ -1,0 +1,44 @@
+# Dependências
+node_modules/
+
+# Builds e cobertura
+build/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Variáveis de ambiente
+.env*
+!.env.example
+
+# Vercel
+.vercel/
+
+# Firebase local
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# Relatórios e resultados do Playwright
+playwright-report/
+test-results/
+blob-report/
+
+# Ferramentas executáveis usadas apenas localmente
+/.codex-tools/
+
+# Arquivos pessoais de contexto para IA
+/Context.md
+/CHATGPT_CONTEXT.md
+/CHATGPT_CONTEXT_ATUAL.md
+
+# Testes e arquivos temporários gerados pelo TestSprite
+/testsprite_tests/

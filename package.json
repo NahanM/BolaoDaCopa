@@ -1,0 +1,43 @@
+{
+  "name": "bolao-da-copa",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port=3000 --host=0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+
+    "test:unit": "tsx scripts/unitRegressionTest.tsx",
+    "test:migration": "tsx scripts/migrationConsolidationTest.ts",
+    "test:volume": "tsx scripts/dataVolumeTest.ts",
+    "test:resilience": "tsx scripts/dataResilienceTest.ts",
+    "test:browsers": "tsx scripts/browserSmokeTest.ts",
+
+    "test:all": "npm run test:unit && npm run test:migration && npm run test:volume && npm run test:resilience && npm run typecheck && npm run build",
+    "test:full": "npm run test:all && npm run test:browsers",
+
+    "deploy:rules": "npx firebase-tools deploy --only firestore:rules --project bolaodacopa-90a57",
+    "deploy:rules:old": "npx firebase-tools deploy --only firestore:rules --project testebolao2"
+  },
+  "dependencies": {
+    "firebase": "^12.14.0",
+    "lucide-react": "^0.546.0",
+    "motion": "^12.23.24",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.14",
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.0.4",
+    "playwright": "^1.60.0",
+    "tailwindcss": "^4.1.14",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.3"
+  }
+}
