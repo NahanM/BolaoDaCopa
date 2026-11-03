@@ -16,8 +16,6 @@ A aplicação está disponível em:
 
 https://bolaodacopa-beige.vercel.app
 
-![Tela do Bolão da Copa 2026](docs/print.png)
-
 ## Objetivo do projeto
 
 Antes da aplicação, o controle dos palpites, partidas e pontuações era realizado manualmente por meio de planilhas e mensagens.
