@@ -11,8 +11,9 @@ function parseAdminEmails(value?: string): string[] {
 
 function getEnvValue(key: string) {
   const viteEnv = import.meta.env as Record<string, string | undefined> | undefined;
+  const nodeEnv = typeof process !== 'undefined' ? process.env[key] : undefined;
 
-  return viteEnv?.[key] || process.env[key];
+  return viteEnv?.[key] || nodeEnv;
 }
 
 export const ADMIN_EMAILS = [

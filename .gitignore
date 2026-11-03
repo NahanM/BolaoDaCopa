@@ -42,3 +42,4 @@ blob-report/
 
 # Testes e arquivos temporários gerados pelo TestSprite
 /testsprite_tests/
+.vercel
