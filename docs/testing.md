@@ -77,7 +77,9 @@ Essa suíte valida as principais regras do bolão:
 * filtros de partidas;
 * bloqueio de palpites;
 * cálculo da premiação;
-* estados relevantes do componente `MatchCard`.
+* texto de "Copiar todos";
+* estados relevantes do componente `MatchCard`;
+* telas do modo encerrado.
 
 As funções reais da camada de domínio são utilizadas nos testes para reduzir a diferença entre o comportamento testado e o comportamento executado pela aplicação.
 
@@ -203,9 +205,8 @@ O processo:
 3. abre os navegadores configurados;
 4. testa a aplicação em resoluções desktop e mobile;
 5. valida os principais fluxos de navegação;
-6. verifica funcionalidades relacionadas ao clipboard;
-7. captura erros apresentados no console do navegador;
-8. encerra o servidor ao final da execução.
+6. captura erros apresentados no console do navegador;
+7. encerra o servidor ao final da execução.
 
 A aplicação de teste é servida em:
 
@@ -227,11 +228,9 @@ A ausência de um navegador opcional não deve impedir a execução dos navegado
 
 ### Ambiente isolado
 
-Os testes de navegador utilizam configurações próprias para evitar dependência do ambiente Firebase de produção.
+Os testes de navegador usam um projeto Firebase fictício e bloqueiam as chamadas ao Firebase. Nenhuma credencial é necessária e nenhum banco real é acessado.
 
-Nenhuma credencial real deve ser necessária para executar a suíte.
-
-Caso o teste utilize um modo de dados locais ou fallback, essa configuração deve permanecer documentada no `.env.example` ou no próprio script de teste.
+Como a aplicação começa sem partidas, a suíte valida a navegação com a lista vazia.
 
 ## Validação completa
 
@@ -317,7 +316,6 @@ Exemplos de textos que podem ser utilizados:
 
 ```text
 Prêmio total
-Copiar todos
 Classificação geral
 Conferência de palpites
 ```

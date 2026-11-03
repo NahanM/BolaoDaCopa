@@ -18,6 +18,22 @@ import type {
   ChampionPickTeam,
 } from '../../types';
 
+// Passos exibidos enquanto o bolão está aberto.
+const HOW_IT_WORKS_STEPS = [
+  'Entre com sua conta Google para criar seu perfil.',
+  'Faça seus palpites antes do início das partidas.',
+  'Depois que o admin lançar o resultado oficial, o ranking é recalculado automaticamente.',
+  'Use os botões de compartilhamento para mandar seus palpites no WhatsApp.',
+];
+
+// Os mesmos passos, no passado, depois do encerramento.
+const CLOSED_HOW_IT_WORKS_STEPS = [
+  'Cada participante entrava com a conta Google.',
+  'Os palpites eram feitos antes do início das partidas.',
+  'Depois que o admin lançava o resultado oficial, o ranking era recalculado automaticamente.',
+  'Os botões de compartilhamento mandavam os palpites no WhatsApp.',
+];
+
 // Define todos os dados e ações
 // que a página inicial recebe do componente pai.
 //
@@ -56,6 +72,9 @@ interface HomePageProps {
   // está sendo salva.
   isSavingChampionPick: boolean;
 
+  // Indica que o bolão foi encerrado.
+  isClosed?: boolean;
+
   // Função responsável por salvar
   // a seleção escolhida pelo usuário.
   onPickChampionTeam: (
@@ -92,6 +111,7 @@ export function HomePage({
   currentChampionPick,
   isUserLoggedIn,
   isSavingChampionPick,
+  isClosed = false,
   onPickChampionTeam,
   onGoToMatches,
   onGoToRanking,
@@ -111,7 +131,11 @@ export function HomePage({
   //
   // resultado:
   // escolha aberta.
+  //
+  // O encerramento do bolão fecha a escolha,
+  // seja qual for a configuração salva.
   const isChampionPickOpen =
+    !isClosed &&
     championPickSettings.enabled &&
     !championPickSettings.locked;
 
@@ -141,23 +165,28 @@ export function HomePage({
           <div className="space-y-4">
             {/* Pequeno destaque indicando
                 a atualização em tempo real */}
-            <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-800">
-              <Sparkles className="h-3.5 w-3.5" />
+            {!isClosed && (
+              <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-800">
+                <Sparkles className="h-3.5 w-3.5" />
 
-              <span>
-                Bolão sincronizado em tempo real
-              </span>
-            </div>
+                <span>
+                  Bolão sincronizado em tempo real
+                </span>
+              </div>
+            )}
 
             {/* Título e explicação principal */}
             <div className="space-y-2">
               <h2 className="text-2xl font-black leading-tight tracking-tight text-slate-900 md:text-3xl">
-                Faça seus palpites com calma e acompanhe a disputa da Copa.
+                {isClosed
+                  ? 'O bolão da Copa 2026 terminou. Confira como foi a disputa.'
+                  : 'Faça seus palpites com calma e acompanhe a disputa da Copa.'}
               </h2>
 
               <p className="max-w-2xl text-sm leading-relaxed text-slate-600">
-                O app salva os palpites, calcula a pontuação automaticamente e
-                ajuda a compartilhar tudo no WhatsApp sem planilhas soltas.
+                {isClosed
+                  ? 'O site segue no ar só para consulta: veja o ranking final, as partidas e os palpites de cada participante, sem precisar entrar.'
+                  : 'O app salva os palpites, calcula a pontuação automaticamente e ajuda a compartilhar tudo no WhatsApp sem planilhas soltas.'}
               </p>
             </div>
 
@@ -168,20 +197,22 @@ export function HomePage({
                 A partir do breakpoint sm,
                 ficam lado a lado. */}
             <div className="flex flex-col gap-2 pt-1 sm:flex-row">
-              <button
-                type="button"
+              {!isClosed && (
+                <button
+                  type="button"
 
-                // A HomePage não controla
-                // diretamente qual tela será aberta.
-                //
-                // Ela apenas chama a função
-                // recebida do componente pai.
-                onClick={onGoToMatches}
+                  // A HomePage não controla
+                  // diretamente qual tela será aberta.
+                  //
+                  // Ela apenas chama a função
+                  // recebida do componente pai.
+                  onClick={onGoToMatches}
 
-                className="app-button-primary py-2.5"
-              >
-                Fazer meus palpites
-              </button>
+                  className="app-button-primary py-2.5"
+                >
+                  Fazer meus palpites
+                </button>
+              )}
 
               <button
                 type="button"
@@ -409,6 +440,8 @@ export function HomePage({
                 isSavingChampionPick
               }
 
+              isClosed={isClosed}
+
               onPickTeam={
                 onPickChampionTeam
               }
@@ -488,7 +521,9 @@ export function HomePage({
           <div className="space-y-3">
             <div>
               <h3 className="text-lg font-bold text-slate-900">
-                Como o bolão funciona?
+                {isClosed
+                  ? 'Como o bolão funcionou?'
+                  : 'Como o bolão funciona?'}
               </h3>
 
               <p className="mt-1 text-sm text-slate-500">
@@ -502,23 +537,14 @@ export function HomePage({
                 Como possui list-decimal,
                 os itens aparecem numerados. */}
             <ol className="list-inside list-decimal space-y-2 text-sm leading-relaxed text-slate-600">
-              <li>
-                Entre com sua conta Google para criar seu perfil.
-              </li>
-
-              <li>
-                Faça seus palpites antes do início das partidas.
-              </li>
-
-              <li>
-                Depois que o admin lançar o resultado oficial, o ranking é
-                recalculado automaticamente.
-              </li>
-
-              <li>
-                Use os botões de compartilhamento para mandar seus palpites no
-                WhatsApp.
-              </li>
+              {(isClosed
+                ? CLOSED_HOW_IT_WORKS_STEPS
+                : HOW_IT_WORKS_STEPS
+              ).map((step) => (
+                <li key={step}>
+                  {step}
+                </li>
+              ))}
             </ol>
           </div>
         </div>
@@ -535,8 +561,9 @@ export function HomePage({
           </h3>
 
           <p className="mt-1 text-xs leading-relaxed text-emerald-800">
-            Os palpites devem ser enviados antes da partida começar. Depois do
-            horário do jogo, o sistema bloqueia alterações.
+            {isClosed
+              ? 'Os palpites precisavam ser enviados antes da partida começar. Depois do horário do jogo, o sistema bloqueava alterações.'
+              : 'Os palpites devem ser enviados antes da partida começar. Depois do horário do jogo, o sistema bloqueia alterações.'}
           </p>
         </div>
       </section>

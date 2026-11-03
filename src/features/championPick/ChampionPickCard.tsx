@@ -49,6 +49,9 @@ interface ChampionPickCardProps {
   // os campos ficam bloqueados.
   isSavingPick?: boolean;
 
+  // Indica que o bolão foi encerrado.
+  isClosed?: boolean;
+
   // Função responsável por salvar
   // a seleção escolhida.
   //
@@ -66,8 +69,14 @@ interface ChampionPickCardProps {
 function getPickUnavailableMessage(
   isOpen: boolean,
   isUserLoggedIn: boolean,
-  eligibleTeamsCount: number
+  eligibleTeamsCount: number,
+  isClosed: boolean
 ): string {
+  // O bolão acabou: não há mais o que liberar.
+  if (isClosed) {
+    return 'A Bolsa Campeão foi encerrada.';
+  }
+
   // A funcionalidade ainda não foi liberada.
   if (!isOpen) {
     return (
@@ -124,6 +133,7 @@ export function ChampionPickCard({
   currentPick = null,
   isUserLoggedIn = false,
   isSavingPick = false,
+  isClosed = false,
   onPickTeam,
 }: ChampionPickCardProps) {
   // Guarda o código da seleção
@@ -189,7 +199,8 @@ export function ChampionPickCard({
     getPickUnavailableMessage(
       isOpen,
       isUserLoggedIn,
-      eligibleTeams.length
+      eligibleTeams.length,
+      isClosed
     );
 
   // Executa quando o usuário clica

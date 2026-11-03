@@ -12,6 +12,7 @@ import { AppHeader } from './components/layout/AppHeader';
 import { AppNavigation } from './components/layout/AppNavigation';
 import { OfflineBanner } from './components/layout/OfflineBanner';
 import { DEFAULT_AVATAR } from './config/avatars';
+import { BOLAO_ENCERRADO } from './config/bolaoStatus';
 import { HomePage } from './features/home/HomePage';
 import { useAuthPlayer } from './hooks/useAuthPlayer';
 import { useBolaoDerivedData } from './hooks/useBolaoDerivedData';
@@ -189,6 +190,13 @@ export default function App() {
   // qual conteúdo será exibido conforme a aba ativa.
   return (
     <div className="min-h-screen bg-[#edf7f1] text-slate-900 font-sans flex flex-col">
+      {/* Faixa do modo encerrado. */}
+      {BOLAO_ENCERRADO && (
+        <p className="bg-[#052f22] px-4 py-1.5 text-center text-[11px] font-semibold text-emerald-50/80">
+          Bolão encerrado. Os nomes dos participantes foram alterados.
+        </p>
+      )}
+
       {/* Cabeçalho com dados do usuário, pontuação, prêmio e autenticação. */}
       <AppHeader
         currentUser={currentUser}
@@ -208,6 +216,8 @@ export default function App() {
         canEditProfile={Boolean(
           currentUser && userPlayer && hasPlayersSnapshotResolved
         )}
+        showLogin={!BOLAO_ENCERRADO}
+        showProfileEditor={!BOLAO_ENCERRADO}
         onLogin={handleLogin}
         onLogout={handleLogout}
         onUpdateProfile={handleUpdateProfile}
@@ -217,6 +227,7 @@ export default function App() {
       <AppNavigation
         activeTab={activeTab}
         isAdmin={isCurrentUserAdmin}
+        isClosed={BOLAO_ENCERRADO}
         onChangeTab={setActiveTab}
       />
 
@@ -243,6 +254,7 @@ export default function App() {
             currentChampionPick={currentChampionPick}
             isUserLoggedIn={Boolean(currentUser && userPlayer)}
             isSavingChampionPick={isSavingChampionPick}
+            isClosed={BOLAO_ENCERRADO}
             onPickChampionTeam={handlePickChampionTeam}
             onGoToMatches={() => setActiveTab('matches')}
             onGoToRanking={() => setActiveTab('ranking')}
@@ -254,7 +266,7 @@ export default function App() {
           <div className="space-y-4">
             {/* Visitantes podem consultar as partidas,
                 mas precisam entrar com Google para salvar palpites. */}
-            {!currentUser && (
+            {!currentUser && !BOLAO_ENCERRADO && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="space-y-1 text-center sm:text-left">
                   <h4 className="font-bold text-sm text-amber-950 font-display">
@@ -282,6 +294,7 @@ export default function App() {
               players={uniquePlayers}
               userPlayer={matchesUserPlayer}
               canEdit={canEditPredictions}
+              isClosed={BOLAO_ENCERRADO}
               onUpdatePrediction={handleUpdatePrediction}
             />
           </div>
@@ -318,6 +331,17 @@ export default function App() {
         <p className="text-xs text-emerald-50/70 font-mono">
           Bolão da Copa 2026 - sincronizado via Google Cloud Firestore
         </p>
+
+        {/* Modo encerrado: entrada do admin, já que o login saiu do cabeçalho. */}
+        {BOLAO_ENCERRADO && !currentUser && (
+          <button
+            type="button"
+            onClick={handleLogin}
+            className="mt-1 text-[11px] text-emerald-50/40 underline transition hover:text-emerald-50/80"
+          >
+            Admin
+          </button>
+        )}
       </footer>
     </div>
   );

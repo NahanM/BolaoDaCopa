@@ -2,7 +2,16 @@ import assert from 'node:assert/strict';
 
 import { renderToStaticMarkup } from 'react-dom/server';
 
+import { AppHeader } from '../src/components/layout/AppHeader';
+import { AppNavigation } from '../src/components/layout/AppNavigation';
+import { MatchesList } from '../src/components/MatchesList';
+import {
+  BOLAO_ENCERRADO,
+  parseBolaoEncerrado,
+} from '../src/config/bolaoStatus';
+import { HomePage } from '../src/features/home/HomePage';
 import { MatchCard } from '../src/features/matches/MatchCard';
+import { buildAllPredictionsClipboardText } from '../src/features/matches/shareText';
 import {
   getFilteredMatches,
   getMatchFilterCounts,
@@ -236,6 +245,144 @@ assert.ok(
 );
 assert.ok(renderCard('idle').includes('Atualizado em'));
 
+// Texto de "Copiar todos".
+//
+// O teste de navegador roda sem partidas, então
+// esse texto é conferido aqui.
+assert.ok(
+  buildAllPredictionsClipboardText({
+    matches: [cardMatch],
+    userPlayer: cardPlayer,
+    editedPreds: {},
+  }).includes('1. BR Brasil 1 x 0 Argentina AR')
+);
+
+// Modo encerrado: leitura da flag.
+//
+// Só "true" encerra o bolão. Um valor inesperado na Vercel
+// não pode esconder o login de um bolão que está aberto.
+assert.equal(parseBolaoEncerrado('true'), true);
+assert.equal(parseBolaoEncerrado(' TRUE '), true);
+assert.equal(parseBolaoEncerrado('false'), false);
+assert.equal(parseBolaoEncerrado(''), false);
+assert.equal(parseBolaoEncerrado('1'), false);
+assert.equal(parseBolaoEncerrado(undefined), false);
+
+// Fora do Vite, import.meta.env não existe e o bolão fica aberto.
+assert.equal(BOLAO_ENCERRADO, false);
+
+// Modo encerrado: cabeçalho.
+const renderHeader = (showLogin?: boolean) =>
+  renderToStaticMarkup(
+    <AppHeader
+      currentUser={null}
+      points={0}
+      totalPrizePool={0}
+      canEditProfile={false}
+      showLogin={showLogin}
+      onLogin={noop}
+      onLogout={noop}
+      onUpdateProfile={async () => undefined}
+    />
+  );
+
+assert.ok(renderHeader().includes('Entrar com Google'));
+assert.ok(renderHeader().includes('Bolão da Copa'));
+assert.ok(!renderHeader().includes('Sponte'));
+assert.ok(!renderHeader(false).includes('Entrar com Google'));
+
+// Modo encerrado: navegação.
+const renderNavigation = (isClosed?: boolean) =>
+  renderToStaticMarkup(
+    <AppNavigation
+      activeTab="home"
+      isAdmin={false}
+      isClosed={isClosed}
+      onChangeTab={noop}
+    />
+  );
+
+assert.ok(renderNavigation().includes('Meus Palpites'));
+assert.ok(renderNavigation().includes('Bolão da Copa'));
+assert.ok(!renderNavigation().includes('Bolao Bet'));
+assert.ok(!renderNavigation(true).includes('Meus Palpites'));
+assert.ok(renderNavigation(true).includes('Partidas'));
+
+// Modo encerrado: página inicial, inclusive com a
+// Bolsa Campeão ainda aberta na configuração salva.
+const renderHome = (isClosed?: boolean) =>
+  renderToStaticMarkup(
+    <HomePage
+      totalPrizePool={20}
+      firstPrize={16}
+      secondPrize={4}
+      participantsCount={2}
+      championPickSettings={{
+        enabled: true,
+        locked: false,
+        bonusPoints: 30,
+        championTeamCode: '',
+        eligibleTeamCodes: ['BRA'],
+        eligibleTeams: [{ code: 'BRA', name: 'Brasil' }],
+      }}
+      currentChampionPick={null}
+      isUserLoggedIn={false}
+      isSavingChampionPick={false}
+      isClosed={isClosed}
+      onPickChampionTeam={noop}
+      onGoToMatches={noop}
+      onGoToRanking={noop}
+    />
+  );
+
+assert.ok(renderHome().includes('Fazer meus palpites'));
+assert.ok(renderHome().includes('Entre com sua conta Google'));
+
+const closedHome = renderHome(true);
+
+assert.ok(closedHome.includes('Ver classificação'));
+assert.ok(closedHome.includes('A Bolsa Campeão foi encerrada.'));
+assert.ok(!closedHome.includes('Fazer meus palpites'));
+assert.ok(!closedHome.includes('Entre com'));
+assert.ok(!closedHome.includes('Faça seus palpites'));
+assert.ok(!closedHome.includes('Aberta'));
+
+// Modo encerrado: lista de partidas de um visitante.
+//
+// Com todas as partidas finalizadas, o filtro padrão
+// "Abertos" deixaria a lista vazia.
+const renderMatchesList = (isClosed?: boolean) =>
+  renderToStaticMarkup(
+    <MatchesList
+      matches={[finishedMatch]}
+      players={[]}
+      userPlayer={createPlayer({ predictions: {} })}
+      canEdit={false}
+      isClosed={isClosed}
+      onUpdatePrediction={noop}
+    />
+  );
+
+const openMatchesList = renderMatchesList();
+
+assert.ok(openMatchesList.includes('Abertos ('));
+assert.ok(openMatchesList.includes('Copiar todos'));
+assert.ok(openMatchesList.includes('Nenhuma partida encontrada'));
+
+const closedMatchesList = renderMatchesList(true);
+
+assert.ok(closedMatchesList.includes('Resultado oficial'));
+assert.ok(closedMatchesList.includes('Detalhes'));
+assert.ok(closedMatchesList.includes('Todos ('));
+assert.ok(closedMatchesList.includes('Finalizados ('));
+assert.ok(!closedMatchesList.includes('<input'));
+assert.ok(!closedMatchesList.includes('Entre com'));
+assert.ok(!closedMatchesList.includes('Copiar todos'));
+assert.ok(!closedMatchesList.includes('Postar jogo'));
+assert.ok(!closedMatchesList.includes('Abertos ('));
+assert.ok(!closedMatchesList.includes('Sem palpite ('));
+assert.ok(!closedMatchesList.includes('Meus palpites ('));
+
 console.log(
   JSON.stringify(
     {
@@ -250,6 +397,7 @@ console.log(
       filters: getMatchFilterCounts(filterMatches, filterPlayer),
       predictionLock: 'passed',
       predictionCardStatuses: 'passed',
+      closedMode: 'passed',
       prizes: calculatePrizes(paidPlayers.length),
     },
     null,

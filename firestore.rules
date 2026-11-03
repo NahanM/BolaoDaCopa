@@ -348,8 +348,11 @@ function playerDataIsValid(data, playerId) {
      // as Rules previsíveis e seguras.
      //
     && data.isAdmin is bool
-    && data.email is string
-    && data.email.size() <= 254;
+
+    // O e-mail é opcional: os e-mails dos participantes foram apagados depois
+    // do encerramento, e o Admin precisa continuar editando esses perfis.
+    && data.get("email", "") is string
+    && data.get("email", "").size() <= 254;
 }
 
  // Confirma que um palpite possui somente os campos previstos e placares válidos.
@@ -677,22 +680,11 @@ match /players/{playerId} {
   allow create: if isAdmin()
     && playerDataIsValid(request.resource.data, playerId);
 
-  // ATUALIZAÇÃO DE PERFIL (Dois Caminhos Autorizados):
-  //
-  // 1. Pelo Admin: Pode editar qualquer perfil (para corrigir dados ou
-  // recalcular pontos), desde que mantenha o formato dos dados válido.
-  //
-  // 2. Pelo próprio Usuário: Pode editar apenas o SEU próprio perfil.
-  // A requisição é filtrada pela função `ownerUpdateIsSafe`, que age
-  // como um escudo: ela permite alterar os palpites, mas trava qualquer
-  // tentativa de modificar os pontos ou o status de admin.
-  allow update: if (
-    // Caminho 1: Admin
-    (isAdmin() && playerDataIsValid(request.resource.data, playerId))
-
-    // Caminho 2: Usuário alterando a si mesmo
-    || ownerUpdateIsSafe(playerId)
-  );
+  // ATUALIZAÇÃO DE PERFIL: com o bolão encerrado, somente o Admin pode editar
+  // um perfil, desde que mantenha o formato dos dados válido. O próprio
+  // usuário não altera mais nome, foto, e-mail nem palpites.
+  allow update: if isAdmin()
+    && playerDataIsValid(request.resource.data, playerId);
 
   // EXCLUSÃO: Apenas o Administrador pode apagar um participante.
   // Impede que usuários deletem a própria conta e quebrem o ranking do bolão.
@@ -904,15 +896,16 @@ function championPickDataIsValid(data, playerEmail) {
  // uma escolha por e-mail e facilita encontrar a escolha do usuário atual.
  //
 match /championPicks/{playerEmail} {
-  // A leitura é pública para permitir conferência das escolhas.
-  // Atenção: como o e-mail é o ID do documento, ele também fica visível para
-  // quem tiver acesso de leitura à coleção. Avaliar privacidade se necessário.
-  allow read: if true;
+  // LEITURA: somente o Admin. O e-mail do participante é o ID do documento,
+  // então a leitura pública exporia esses e-mails.
+  allow read: if isAdmin();
 
-   // Usuário pode criar somente a própria escolha, uma única vez e enquanto
-   // a Bolsa estiver aberta. Após salvar, update é bloqueado.
+   // Com o bolão encerrado, somente o Admin pode criar uma escolha, e apenas
+   // a própria, uma única vez e enquanto a Bolsa estiver aberta. Após salvar,
+   // update é bloqueado.
    //
-  allow create: if championPickEmailMatches(playerEmail)
+  allow create: if isAdmin()
+    && championPickEmailMatches(playerEmail)
 
     // A checagem explícita reforça que não pode haver segunda escolha.
     && !exists(

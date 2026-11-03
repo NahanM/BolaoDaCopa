@@ -9,6 +9,7 @@ import type { User as FirebaseUser } from 'firebase/auth';
 
 import { isAdminEmail } from '../config/admins';
 import { DEFAULT_AVATAR } from '../config/avatars';
+import { BOLAO_ENCERRADO } from '../config/bolaoStatus';
 import {
   getNormalizedEmail,
   mergePlayersKeepingPrimary,
@@ -36,6 +37,11 @@ interface UseAuthPlayerOptions {
 
   // Informa ao App que ocorreu uma falha de conexão.
   onOffline: () => void;
+}
+
+// No modo encerrado, somente e-mails de admin podem manter uma sessão.
+function isLoginBlocked(user: FirebaseUser): boolean {
+  return BOLAO_ENCERRADO && !isAdminEmail(user.email);
 }
 
 // Cria um Player inicial a partir do usuário autenticado.
@@ -121,6 +127,21 @@ export function useAuthPlayer({
   // quanto no logout do usuário.
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      // A conta bloqueada nunca chega ao currentUser. Assim, o restante do
+      // app não lê nem grava nada do perfil dela.
+      //
+      // Isso também encerra a sessão antiga salva no navegador, que
+      // reaparece ao abrir o site sem nenhum clique em login.
+      if (user && isLoginBlocked(user)) {
+        setCurrentUser(null);
+
+        void signOut(auth).catch((error) => {
+          console.error('Erro ao encerrar sessão:', error);
+        });
+
+        return;
+      }
+
       setCurrentUser(user);
     });
 
@@ -142,6 +163,20 @@ export function useAuthPlayer({
 
     // Aguarda o carregamento inicial da lista de jogadores.
     if (isLoadingPlayers) {
+      return;
+    }
+
+    // Modo encerrado: o login só identifica a conta.
+    //
+    // Não cria, não completa e não mescla perfil. Assim, o nome e o e-mail
+    // da conta Google não voltam para o Firestore.
+    if (BOLAO_ENCERRADO) {
+      setUserPlayer(
+        players.find(
+          (player) => player.id === currentUser.uid
+        ) ?? null
+      );
+
       return;
     }
 
@@ -288,7 +323,15 @@ export function useAuthPlayer({
   // Quem atualiza é o observador onAuthStateChanged.
   const login = useCallback(async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const { user } = await signInWithPopup(auth, googleProvider);
+
+      if (isLoginBlocked(user)) {
+        await signOut(auth);
+
+        alert(
+          'O bolão foi encerrado. O acesso agora é só da administração.'
+        );
+      }
     } catch (error) {
       console.error('Erro ao realizar login:', error);
 
@@ -316,6 +359,11 @@ export function useAuthPlayer({
   // e se o snapshot real do Firestore já foi recebido.
   const updateProfile = useCallback(
     async (name: string, avatar: string) => {
+      // Este fluxo poderia gravar de volta o e-mail da conta Google.
+      if (BOLAO_ENCERRADO) {
+        throw new Error('bolao-encerrado');
+      }
+
       if (!currentUser || !userPlayer) {
         throw new Error('profile-user-not-ready');
       }

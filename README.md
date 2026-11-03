@@ -6,11 +6,17 @@ O sistema centraliza partidas, palpites, classificação, premiação e conferê
 
 Além da experiência dos participantes, o projeto possui um painel administrativo para gerenciamento das partidas, resultados, participantes e configurações do bolão.
 
+## Status
+
+Concluído. Utilizado durante a Copa do Mundo de 2026 por cerca de 15 pessoas, com 104 partidas e mais de 1.000 palpites registrados, substituindo as planilhas usadas anteriormente. Hoje o site segue no ar apenas para visualização.
+
 ## Aplicação
 
 A aplicação está disponível em:
 
 https://bolaodacopa-beige.vercel.app
+
+![Tela do Bolão da Copa 2026](docs/print.png)
 
 ## Objetivo do projeto
 
@@ -64,14 +70,22 @@ Partidas ainda não finalizadas não entram no cálculo da classificação.
 
 Em caso de empate na pontuação total, a quantidade de placares exatos é utilizada como critério de desempate.
 
+### Bolsa Campeão
+
+No mata-mata, cada participante pode escolher uma seleção entre as liberadas pelo administrador. A escolha é feita uma única vez e não pode ser alterada.
+
+O bônus padrão é de 30 pontos, dividido entre quem escolher o campeão. O sistema registra as escolhas, mas não calcula o bônus. Os pontos entram na classificação por ajuste manual do administrador.
+
 ## Tecnologias utilizadas
 
 ### Frontend
 
-* React;
-* TypeScript;
-* Vite;
-* Tailwind CSS.
+* React 19;
+* TypeScript 5.8;
+* Vite 6;
+* Tailwind CSS 4;
+* Motion;
+* Lucide.
 
 ### Autenticação e banco de dados
 
@@ -86,40 +100,33 @@ Em caso de empate na pontuação total, a quantidade de placares exatos é utili
 
 ### Testes e qualidade
 
-* Playwright;
-* TypeScript;
-* ESLint;
-* testes automatizados de regras e funcionalidades.
+* Playwright para testes em navegador;
+* `tsx` e `node:assert` para testes de regras de negócio e de dados;
+* TypeScript para verificação de tipos.
 
 ## Arquitetura
 
 ```text
 Participante ou administrador
-            ↓
-Aplicação React com TypeScript
-            ↓
- ┌─────────────────────────────┐
- │ Firebase Authentication     │
- │ Cloud Firestore             │
- └─────────────────────────────┘
-            ↓
-Funções serverless da Vercel
-            ↓
-Fontes externas de partidas
+              ↓
+       Aplicação React
+       ↓             ↓
+   Firebase      Funções da pasta api/
+                 ↓                  ↓
+               ESPN            OpenFootball
+             principal           reserva
 ```
 
-O frontend é responsável pela interface, pelos fluxos de autenticação e pela interação com os dados do bolão.
+O React usa o Firebase Authentication para o login com Conta Google e o Cloud Firestore para partidas, participantes, palpites e configurações.
 
-O Firebase Authentication controla o acesso por Conta Google, enquanto o Cloud Firestore armazena partidas, participantes, palpites e configurações.
+As funções da pasta `api` buscam as partidas na ESPN e usam o OpenFootball como reserva. O painel administrativo chama essas funções e salva o resultado no Firestore.
 
-As funções serverless hospedadas na Vercel são utilizadas para integração com fontes externas de dados esportivos.
+## Decisões técnicas
 
-Mais detalhes estão disponíveis na documentação:
-
-* [Arquitetura do projeto](docs/architecture.md)
-* [Modelo de dados](docs/data-model.md)
-* [Manutenção e administração](docs/maintenance.md)
-* [Testes do projeto](docs/testing.md)
+* **Regras de segurança do Firestore:** a autorização fica no banco, não na interface. O `firestore.rules` define quem pode escrever e valida o formato de cada documento.
+* **Fallback ESPN → OpenFootball:** quando a ESPN falha ou não retorna partidas válidas, a API consulta o OpenFootball e devolve os dados no mesmo formato.
+* **Bloqueio do palpite:** o palpite travava quando a partida começava. A interface fazia o bloqueio e as regras do Firestore conferiam o horário do servidor.
+* **Modo encerrado:** com `VITE_BOLAO_ENCERRADO="true"`, o site fica só para consulta e apenas o administrador consegue entrar. As regras do Firestore negam qualquer outra escrita.
 
 ## Estrutura do projeto
 
@@ -158,28 +165,20 @@ tsconfig.json
 
 Para executar o projeto, é necessário ter instalado:
 
-* Node.js 20.19 ou superior;
+* Node.js 20.19+ ou 22.12+;
 * npm;
 * Git.
-
-Verifique as versões instaladas:
-
-```bash
-node --version
-npm --version
-git --version
-```
 
 ### 1. Clone o repositório
 
 ```bash
-git clone URL_DO_REPOSITORIO
+git clone https://github.com/NahanM/BolaoDaCopa.git
 ```
 
 Entre na pasta do projeto:
 
 ```bash
-cd bolaodacopa
+cd BolaoDaCopa
 ```
 
 ### 2. Instale as dependências
@@ -188,31 +187,31 @@ cd bolaodacopa
 npm ci
 ```
 
-O comando `npm ci` utiliza as versões registradas no arquivo `package-lock.json`, garantindo uma instalação reproduzível.
-
-Durante o desenvolvimento, use `npm install` quando precisar adicionar, remover ou atualizar dependências.
-
 ### 3. Configure as variáveis de ambiente
 
-Crie um arquivo `.env.local` com base no `.env.example`.
+Crie o arquivo `.env.local` a partir do exemplo:
 
-A aplicação principal usa o projeto Firebase atual:
-
-```text
-projectId: bolaodacopa-90a57
-databaseId: (default)
-
-VITE_FIREBASE_API_KEY="YOUR_FIREBASE_API_KEY"
-VITE_FIREBASE_AUTH_DOMAIN="bolaodacopa-90a57.firebaseapp.com"
-VITE_FIREBASE_PROJECT_ID="bolaodacopa-90a57"
-VITE_FIREBASE_STORAGE_BUCKET="bolaodacopa-90a57.firebasestorage.app"
-VITE_FIREBASE_MESSAGING_SENDER_ID="YOUR_SENDER_ID"
-VITE_FIREBASE_APP_ID="YOUR_FIREBASE_APP_ID"
-VITE_FIREBASE_MEASUREMENT_ID="YOUR_MEASUREMENT_ID"
-VITE_FIREBASE_DATABASE_ID="(default)"
-
-VITE_ADMIN_EMAILS="admin@example.com"
+```bash
+cp .env.example .env.local
 ```
+
+No PowerShell, use `Copy-Item .env.example .env.local`.
+
+Sem credenciais reais, a interface abre, mas sem partidas ou participantes, e o login e a gravação de dados não funcionam.
+
+Para usar esses recursos, é necessário um projeto Firebase próprio:
+
+1. crie um projeto no [console do Firebase](https://console.firebase.google.com);
+2. ative o login com Google no Authentication e crie um banco no Cloud Firestore;
+3. registre um app web e substitua os valores do `.env.local` pelas credenciais dele;
+4. coloque seu e-mail em `VITE_ADMIN_EMAILS` e na função `adminEmails()` do `firestore.rules`, pois somente administradores podem criar participantes;
+5. publique as regras no seu projeto:
+
+```bash
+npx firebase-tools deploy --only firestore:rules --project ID_DO_SEU_PROJETO
+```
+
+As regras atuais são as do modo encerrado: somente o administrador grava dados.
 
 ### 4. Inicie a aplicação
 
@@ -225,6 +224,8 @@ A aplicação ficará disponível, por padrão, em:
 ```text
 http://localhost:3000
 ```
+
+O banco começa sem partidas: elas são cadastradas ou sincronizadas pelo painel administrativo. A função da pasta `api` não é executada pelo `npm run dev`, então a sincronização só funciona na Vercel ou localmente com `npx vercel dev`.
 
 ## Comandos disponíveis
 
@@ -242,7 +243,7 @@ Inicia o servidor de desenvolvimento.
 npm run build
 ```
 
-Verifica e gera os arquivos otimizados para produção.
+Gera os arquivos otimizados para produção na pasta `dist`.
 
 ### Visualização do build
 
@@ -271,10 +272,11 @@ Executa as principais verificações automatizadas, incluindo testes, TypeScript
 ### Testes no navegador
 
 ```bash
+npx playwright install chromium firefox
 npm run test:browsers
 ```
 
-Executa os testes automatizados da aplicação em navegadores.
+Executa os testes automatizados da aplicação em navegadores. A instalação dos navegadores só é necessária na primeira execução.
 
 A descrição completa dos testes está disponível em:
 
@@ -302,3 +304,5 @@ Mais detalhes sobre a implementação estão disponíveis em:
 ## Autor
 
 Desenvolvido por **Nahan Miguel Barbosa**.
+
+[www.linkedin.com/in/nahan-miguel-barbosa](https://www.linkedin.com/in/nahan-miguel-barbosa)

@@ -57,6 +57,14 @@ interface AppHeaderProps {
   // já está disponível para edição.
   canEditProfile: boolean;
 
+  // Mostra o botão de login para
+  // quem não está autenticado.
+  showLogin?: boolean;
+
+  // Mostra o botão que abre
+  // a edição de perfil.
+  showProfileEditor?: boolean;
+
   // Solicita autenticação com Google.
   onLogin: () => void;
 
@@ -90,6 +98,8 @@ export function AppHeader({
   points,
   totalPrizePool,
   canEditProfile,
+  showLogin = true,
+  showProfileEditor = true,
   onLogin,
   onLogout,
   onUpdateProfile,
@@ -280,10 +290,8 @@ export function AppHeader({
               Gestão de palpites
             </p>
 
-            {/* É aqui que o nome
-                “Sponte Bet” é exibido. */}
             <h1 className="text-xl font-black leading-tight tracking-tight text-white md:text-2xl">
-              Sponte Bet
+              Bolão da Copa
             </h1>
 
             <p className="mt-1 max-w-xl text-sm text-emerald-50/80">
@@ -332,32 +340,34 @@ export function AppHeader({
                   </div>
 
                   {/* Abrir edição de perfil */}
-                  <button
-                    type="button"
+                  {showProfileEditor && (
+                    <button
+                      type="button"
 
-                    onClick={
-                      () =>
-                        setIsEditingProfile(
-                          true
-                        )
-                    }
+                      onClick={
+                        () =>
+                          setIsEditingProfile(
+                            true
+                          )
+                      }
 
-                    disabled={
-                      !canEditProfile
-                    }
+                      disabled={
+                        !canEditProfile
+                      }
 
-                    title={
-                      canEditProfile
-                        ? 'Editar nome e foto'
-                        : 'Aguarde sincronizar seu perfil'
-                    }
+                      title={
+                        canEditProfile
+                          ? 'Editar nome e foto'
+                          : 'Aguarde sincronizar seu perfil'
+                      }
 
-                    aria-label="Editar nome e foto"
+                      aria-label="Editar nome e foto"
 
-                    className="shrink-0 rounded-lg p-1.5 text-emerald-50/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
+                      className="shrink-0 rounded-lg p-1.5 text-emerald-50/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  )}
 
                   {/* Encerrar sessão */}
                   <button
@@ -371,7 +381,7 @@ export function AppHeader({
                   </button>
                 </div>
               )
-            : (
+            : showLogin && (
                 // Usuário não autenticado.
                 <button
                   type="button"

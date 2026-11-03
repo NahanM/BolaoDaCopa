@@ -85,6 +85,9 @@ interface MatchCardProps {
   // para alterar palpites.
   canEdit: boolean;
 
+  // Indica que o bolão foi encerrado.
+  isClosed?: boolean;
+
   // Estado atual do salvamento.
   saveStatus?: PredictionSaveStatus;
 
@@ -168,6 +171,7 @@ export function MatchCard({
   userPlayer,
   editedPrediction,
   canEdit,
+  isClosed = false,
   saveStatus = 'idle',
   onInputChange,
   onSavePrediction,
@@ -418,7 +422,7 @@ export function MatchCard({
               )
             : (
                 <div className="mb-2 select-none text-xs font-bold uppercase text-slate-400">
-                  {isLocked
+                  {isLocked || isClosed
                     ? 'Palpite travado'
                     : 'Seu palpite'}
                 </div>
@@ -426,43 +430,48 @@ export function MatchCard({
 
           {/* Componente responsável
               pelos dois inputs do placar
-              e pelo botão de salvamento. */}
-          <PredictionInputs
-            scoreA={currentA}
-            scoreB={currentB}
+              e pelo botão de salvamento.
 
-            disabled={
-              isLocked ||
-              !canEdit ||
-              isSaving
-            }
+              Com o bolão encerrado, não há
+              mais palpite para preencher. */}
+          {!isClosed && (
+            <PredictionInputs
+              scoreA={currentA}
+              scoreB={currentB}
 
-            canEdit={canEdit}
-            isLocked={isLocked}
-            lockMessage={lockMessage}
-            isSaveVisible={isSaveVisible}
+              disabled={
+                isLocked ||
+                !canEdit ||
+                isSaving
+              }
 
-            // Inclui automaticamente
-            // o ID desta partida.
-            onChange={
-              (
-                side,
-                value
-              ) =>
-                onInputChange(
-                  match.id,
+              canEdit={canEdit}
+              isLocked={isLocked}
+              lockMessage={lockMessage}
+              isSaveVisible={isSaveVisible}
+
+              // Inclui automaticamente
+              // o ID desta partida.
+              onChange={
+                (
                   side,
                   value
-                )
-            }
+                ) =>
+                  onInputChange(
+                    match.id,
+                    side,
+                    value
+                  )
+              }
 
-            onSave={
-              () =>
-                onSavePrediction(
-                  match.id
-                )
-            }
-          />
+              onSave={
+                () =>
+                  onSavePrediction(
+                    match.id
+                  )
+              }
+            />
+          )}
 
           {/* Área reservada para mensagens
               relacionadas ao salvamento.
@@ -577,7 +586,7 @@ export function MatchCard({
                         )}
                 </div>
               )
-            : (
+            : !isClosed && (
                 <button
                   type="button"
 

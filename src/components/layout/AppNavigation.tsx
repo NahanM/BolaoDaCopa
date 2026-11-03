@@ -57,6 +57,20 @@ const BASE_ITEMS: ReadonlyArray<NavigationItem> = [
   },
 ];
 
+// Com o bolão encerrado, ninguém tem
+// mais palpites para fazer nessa aba.
+const CLOSED_BASE_ITEMS: ReadonlyArray<NavigationItem> =
+  BASE_ITEMS.map(
+    (item) =>
+      item.id === 'matches'
+        ? {
+            ...item,
+            label: 'Partidas',
+            shortLabel: 'Partidas',
+          }
+        : item
+  );
+
 // Opção disponível somente
 // para administradores.
 //
@@ -88,6 +102,9 @@ interface AppNavigationProps {
   // não substitui autorização no banco.
   isAdmin: boolean;
 
+  // Indica que o bolão foi encerrado.
+  isClosed?: boolean;
+
   // Comunica ao componente pai
   // que o usuário escolheu outra seção.
   onChangeTab: (
@@ -107,8 +124,14 @@ interface AppNavigationProps {
 export function AppNavigation({
   activeTab,
   isAdmin,
+  isClosed = false,
   onChangeTab,
 }: AppNavigationProps) {
+  const baseItems =
+    isClosed
+      ? CLOSED_BASE_ITEMS
+      : BASE_ITEMS;
+
   // Administradores recebem
   // uma opção adicional.
   //
@@ -118,10 +141,10 @@ export function AppNavigation({
   const items: ReadonlyArray<NavigationItem> =
     isAdmin
       ? [
-          ...BASE_ITEMS,
+          ...baseItems,
           ADMIN_ITEM,
         ]
-      : BASE_ITEMS;
+      : baseItems;
 
   return (
     <>
@@ -152,7 +175,7 @@ export function AppNavigation({
 
               <div className="leading-tight">
                 <p className="text-xs font-black text-white">
-                  Bolao Bet
+                  Bolão da Copa
                 </p>
 
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-100/60">

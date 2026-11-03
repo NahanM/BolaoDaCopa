@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import type { User as FirebaseUser } from 'firebase/auth';
 
+import { BOLAO_ENCERRADO } from '../config/bolaoStatus';
 import { getNormalizedEmail } from '../domain/playerMerge';
 import { isPredictionLocked } from '../domain/rules';
 import {
@@ -59,10 +60,12 @@ export function usePredictions({
   // Permite editar palpites somente quando:
   // - existe usuário autenticado;
   // - existe Player vinculado;
-  // - o Firestore confirmou os dados reais dos jogadores.
+  // - o Firestore confirmou os dados reais dos jogadores;
+  // - o bolão não foi encerrado.
   const canEditPredictions = useMemo(
     () =>
       Boolean(
+        !BOLAO_ENCERRADO &&
         currentUser &&
           userPlayer &&
           hasPlayersSnapshotResolved
@@ -82,6 +85,11 @@ export function usePredictions({
       scoreA: number,
       scoreB: number
     ) => {
+      // Este fluxo poderia gravar de volta o e-mail da conta Google.
+      if (BOLAO_ENCERRADO) {
+        return;
+      }
+
       if (!currentUser || !userPlayer) {
         alert(
           'Faça login com sua conta Google para salvar seus palpites.'

@@ -84,6 +84,9 @@ interface MatchesListProps {
   userPlayer: Player;
   canEdit: boolean;
 
+  // Indica que o bolão foi encerrado.
+  isClosed?: boolean;
+
   onUpdatePrediction: (
     matchId: string,
     scoreA: number,
@@ -113,14 +116,20 @@ export function MatchesList({
   players,
   userPlayer,
   canEdit,
+  isClosed = false,
   onUpdatePrediction,
 }: MatchesListProps) {
   // Filtro atualmente selecionado.
+  //
+  // Com o bolão encerrado, nenhuma partida
+  // está aberta, e o filtro "open" ficaria vazio.
   const [
     activeFilter,
     setActiveFilter,
   ] = useState<MatchFilter>(
-    'open'
+    isClosed
+      ? 'all'
+      : 'open'
   );
 
   // Página atual da lista filtrada.
@@ -699,14 +708,18 @@ export function MatchesList({
           matches={matches}
           userPlayer={userPlayer}
           activeFilter={activeFilter}
+          isClosed={isClosed}
           onChangeFilter={
             setActiveFilter
           }
         />
 
         {/* Evita copiar ou compartilhar
-            uma lista totalmente vazia. */}
-        {hasMatches && (
+            uma lista totalmente vazia.
+
+            Com o bolão encerrado, não há
+            palpites próprios para enviar. */}
+        {hasMatches && !isClosed && (
           <BulkPredictionActions
             onCopyAll={
               handleCopyClipboard
@@ -747,6 +760,7 @@ export function MatchesList({
                     ]
                   }
                   canEdit={canEdit}
+                  isClosed={isClosed}
                   saveStatus={
                     predictionSaveStatuses[
                       match.id

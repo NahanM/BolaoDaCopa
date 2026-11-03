@@ -70,6 +70,9 @@ interface MatchFilterTabsProps {
   // Filtro atualmente selecionado.
   activeFilter: MatchFilter;
 
+  // Indica que o bolão foi encerrado.
+  isClosed?: boolean;
+
   // Comunica ao componente pai
   // que o usuário selecionou
   // outro filtro.
@@ -98,8 +101,20 @@ export function MatchFilterTabs({
   matches,
   userPlayer,
   activeFilter,
+  isClosed = false,
   onChangeFilter,
 }: MatchFilterTabsProps) {
+  // Com o bolão encerrado, somem os filtros
+  // que só fazem sentido para quem ainda palpita.
+  const filters =
+    isClosed
+      ? FILTER_DEFINITIONS.filter(
+          (item) =>
+            item.id === 'finished' ||
+            item.id === 'all'
+        )
+      : FILTER_DEFINITIONS;
+
   // Calcula quantas partidas pertencem
   // a cada categoria.
   //
@@ -124,7 +139,7 @@ export function MatchFilterTabs({
     >
       {/* Percorre as definições fixas
           e cria um botão para cada filtro. */}
-      {FILTER_DEFINITIONS.map(
+      {filters.map(
         (item) => {
           // Verifica se este botão
           // representa o filtro atual.

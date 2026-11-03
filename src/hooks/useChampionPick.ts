@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import type { User as FirebaseUser } from 'firebase/auth';
 
+import { BOLAO_ENCERRADO } from '../config/bolaoStatus';
 import { getNormalizedEmail } from '../domain/playerMerge';
 import {
   DEFAULT_CHAMPION_PICK_SETTINGS,
@@ -122,6 +123,11 @@ export function useChampionPick({
   // - a seleção está na lista de elegíveis.
   const pickChampionTeam = useCallback(
     async (team: ChampionPickTeam) => {
+      // A escolha usa o e-mail como ID e também grava o nome do jogador.
+      if (BOLAO_ENCERRADO) {
+        return;
+      }
+
       if (!currentUser || !userPlayer) {
         alert(
           'Faça login com sua conta Google para escolher sua campeã.'
